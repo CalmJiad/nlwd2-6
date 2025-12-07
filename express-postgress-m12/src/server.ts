@@ -1,5 +1,5 @@
 import dotenv from "dotenv";
-import express, { Request, Response } from "express";
+import express, { NextFunction, Request, Response } from "express";
 import path from "path";
 import { Pool } from "pg";
 
@@ -51,7 +51,13 @@ app.use(express.urlencoded()); // FORM data parser
 // db initialise
 initDB();
 
-app.get("/", (req: Request, res: Response) => {
+// logger middleware
+const logger = (req: Request, res: Response, next: NextFunction) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}\n`);
+  next();
+};
+
+app.get("/", logger, (req: Request, res: Response) => {
   res.send("Hello Next Devs!");
 });
 
@@ -185,6 +191,15 @@ app.delete("/users/:id", async (req: Request, res: Response) => {
       details: error,
     });
   }
+});
+
+// not found route
+app.use((req: Request, res: Response) => {
+  res.status(404).json({
+    success: false,
+    message: "No Such Route Found",
+    path: req.path,
+  });
 });
 
 app.listen(port, () => {
